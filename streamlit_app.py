@@ -10,8 +10,8 @@ DEFAULT_API_KEY = "01012025"
 
 # Sidebar setup
 with st.sidebar:
-    st.title('🛡️ GRC Assistant Chatbot')
-    st.write('Interact with your self-hosted GRC LLM (DeepSeek fine-tuned model).')
+    st.title('🛡️ PioNeer+')
+    st.write('Interact with our self-hosted GRC LLM (fine-tuned model).')
 
     api_url = st.text_input('🔗 API Base URL', value=DEFAULT_API_URL)
     api_key = st.text_input('🔑 API Key', type='password', value=DEFAULT_API_KEY)
