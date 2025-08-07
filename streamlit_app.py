@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Set page title
-st.set_page_config(page_title="🛡️ GRC Assistant Chatbot")
+st.set_page_config(page_title="🛡️ PioNeer+")
 
 # Pre-filled API URL and key
 DEFAULT_API_URL = "https://caad42fe50a3.ngrok-free.app"
