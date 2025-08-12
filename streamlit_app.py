@@ -5,7 +5,7 @@ import requests
 st.set_page_config(page_title="🛡️ PioNeer+")
 
 # Pre-filled API URL and key
-DEFAULT_API_URL = "https://623f34fd1aac.ngrok-free.app"
+DEFAULT_API_URL = "https://ad8f7b25fffd.ngrok-free.app"
 DEFAULT_API_KEY = "01012025"
 
 # Sidebar setup
