@@ -2,89 +2,85 @@ import streamlit as st
 import requests
 import base64
 
-# ==== صفحة التطبيق ====
+# ==== App config ====
 st.set_page_config(page_title="🛡️ PioNeer+")
 
-# ==== القيم الافتراضية من TL;DR ====
+# ==== Defaults from TL;DR ====
 DEFAULT_API_URL = "https://25bddf9208eb.ngrok-free.app"
 
-# ==== الشريط الجانبي ====
+# ==== Sidebar ====
 with st.sidebar:
     st.title("🛡️ PioNeer+")
-    st.write("واجهة محادثة لواجهة GRC الذاتية الاستضافة.")
+    st.write("Chat interface for the self-hosted GRC Assistant API.")
 
     api_url = st.text_input("🔗 API Base URL", value=DEFAULT_API_URL)
 
-    st.markdown("**Authentication (اختياري)**")
-    use_api_key = st.checkbox("Send X-API-Key header", value=False)
-    api_key = st.text_input("API Key", type="password") if use_api_key else ""
+    #st.markdown("**Authentication (Optional)**")
+    #use_api_key = st.checkbox("Send X-API-Key header", value=False)
+    #api_key = st.text_input("API Key", type="password") if use_api_key else ""
 
-    use_basic = st.checkbox("Use Basic Auth (Ngrok)", value=False)
-    basic_user = st.text_input("Basic user") if use_basic else ""
-    basic_pass = st.text_input("Basic password", type="password") if use_basic else ""
+    #use_basic = st.checkbox("Use Basic Auth (Ngrok)", value=False)
+    #basic_user = st.text_input("Basic user") if use_basic else ""
+    #basic_pass = st.text_input("Basic password", type="password") if use_basic else ""
 
     st.markdown("---")
     endpoint = st.radio(
         "Endpoint",
-        ["Model-only (/generate)", "RAG (/rag)"],
+        ["Model-only (/generate)"], #, "Retrieval-Augmented (/rag)"
         index=0,
     )
 
-    # التكوين الحتمي: do_sample=false في السيرفر – لا نعرض temperature/top_p
     max_tokens = st.slider("Max Tokens", 64, 2048, 320, 32)
 
-    # إعدادات RAG لكل طلب
+    # Retrieval toggle for RAG endpoint
     rag_enabled = True
-    if endpoint == "RAG (/rag)":
+    if endpoint == "Retrieval-Augmented (/rag)":
         rag_enabled = st.checkbox("Enable retrieval for this call", value=True)
 
     if st.button("🔄 Clear Chat History"):
         st.session_state.messages = []
         st.session_state.session_id = None
 
-# ==== حالة الجلسة ====
+# ==== Session state ====
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "session_id" not in st.session_state:
     st.session_state.session_id = None
 
-# ==== عرض المحادثة ====
+# ==== Show conversation ====
 if not st.session_state.messages:
     st.session_state.messages.append(
-        {"role": "assistant", "content": "👋 أهلا بك! اسألني أي شيء في حوكمة وإدارة المخاطر والالتزام."}
+        {"role": "assistant", "content": "👋 Hello! Ask me anything about GRC, Risk, and Compliance."}
     )
 
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-# ==== دالة النداء ====
+# ==== Backend call ====
 def call_backend(user_query: str) -> str:
-    # الهيدرز
     headers = {"Content-Type": "application/json"}
 
-    # X-API-Key اختياري
+    # Optional X-API-Key
     if use_api_key and api_key:
         headers["X-API-Key"] = api_key
 
-    # Basic Auth اختياري
+    # Optional Basic Auth
     if use_basic and basic_user and basic_pass:
         token = base64.b64encode(f"{basic_user}:{basic_pass}".encode()).decode()
         headers["Authorization"] = f"Basic {token}"
 
-    # اختيار المسار وبناء الحمولة حسب الوثائق
-    is_rag = endpoint.startswith("RAG")
+    # Endpoint selection
+    is_rag = endpoint.startswith("Retrieval")
     path = "/rag" if is_rag else "/generate"
 
     payload = {
         "user_query": user_query,
-        "session_id": st.session_state.session_id,  # قد تكون None؛ السيرفر سيعيد واحدة
+        "session_id": st.session_state.session_id,  # may be None
         "max_tokens": max_tokens,
-        # ملاحظة: السيرفر حتمي (do_sample=false) لذا temperature/top_p غير مستخدمة
     }
 
     if is_rag:
-        # تمكين/تعطيل الاسترجاع لكل طلب
         payload["use_retrieval"] = bool(rag_enabled)
 
     try:
@@ -97,8 +93,6 @@ def call_backend(user_query: str) -> str:
 
     data = resp.json()
 
-    # نتوقع هيكلًا مثل:
-    # { "response": "...", "session_id": "..." }
     if isinstance(data, dict):
         if data.get("session_id"):
             st.session_state.session_id = data["session_id"]
@@ -106,8 +100,8 @@ def call_backend(user_query: str) -> str:
     else:
         return "⚠️ Unexpected server response format."
 
-# ==== إدخال المستخدم ====
-if prompt := st.chat_input("اكتب سؤالك في GRC..."):
+# ==== User input ====
+if prompt := st.chat_input("Enter your GRC-related question..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -118,16 +112,15 @@ if prompt := st.chat_input("اكتب سؤالك في GRC..."):
             st.markdown(result)
             st.session_state.messages.append({"role": "assistant", "content": result})
 
-# ==== تلميحات سريعة ====
-with st.expander("ℹ️ Notes"):
-    st.markdown(
+# ==== Notes ====
+
         """
-- الخادم مضبوط على مخرجات **حتمية** (`do_sample=false`) لذا **temperature/top_p** يتم تجاهلهما.
-- يمكنك تشغيل الذاكرة القصيرة عبر **session_id**؛ إن لم ترسله، سيُعاد من الخادم ونخزّنه تلقائيا.
-- اختر **/rag** لتعزيز الإجابة بالاسترجاع، ويمكنك تعطيله لكل طلب من الخيار الجانبي.
-- المصادقة:
-  - محليًا: لا شيء.
-  - Ngrok Basic Auth: فعّل خيار Basic وادخل المستخدم/كلمة المرور.
-  - API Key: فعّل خيار X-API-Key وأدخل المفتاح إن كانت الخلفية مفعّلة له.
+- The backend is configured for **deterministic output** (`do_sample=false`), so **temperature/top_p are ignored**.
+- Session memory is keyed by **session_id**; if you don’t send one, the server generates it and we store it for you.
+- `/rag` can optionally use retrieval; disable per call with the checkbox.
+- Authentication:
+  - Locally: no auth.
+  - Ngrok Basic Auth: enable checkbox, enter user/password.
+  - API Key: enable checkbox, enter API key if backend enforces it.
 """
-    )
+    
