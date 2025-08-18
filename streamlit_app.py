@@ -5,7 +5,7 @@ import base64
 # ==== App config ====
 st.set_page_config(page_title="🛡️ PioNeer+")
 
-# ==== Defaults from TL;DR ====
+# ==== Defaults ====
 DEFAULT_API_URL = "https://25bddf9208eb.ngrok-free.app"
 
 # ==== Sidebar ====
@@ -15,27 +15,16 @@ with st.sidebar:
 
     api_url = st.text_input("🔗 API Base URL", value=DEFAULT_API_URL)
 
-    #st.markdown("**Authentication (Optional)**")
-    #use_api_key = st.checkbox("Send X-API-Key header", value=False)
-    #api_key = st.text_input("API Key", type="password") if use_api_key else ""
+    st.markdown("**Authentication (Optional)**")
+    use_api_key = st.checkbox("Send X-API-Key header", value=False)
+    api_key = st.text_input("API Key", type="password") if use_api_key else ""
 
-    #use_basic = st.checkbox("Use Basic Auth (Ngrok)", value=False)
-    #basic_user = st.text_input("Basic user") if use_basic else ""
-    #basic_pass = st.text_input("Basic password", type="password") if use_basic else ""
+    use_basic = st.checkbox("Use Basic Auth (Ngrok)", value=False)
+    basic_user = st.text_input("Basic user") if use_basic else ""
+    basic_pass = st.text_input("Basic password", type="password") if use_basic else ""
 
     st.markdown("---")
-    endpoint = st.radio(
-        "Endpoint",
-        ["Model-only (/generate)"], #, "Retrieval-Augmented (/rag)"
-        index=0,
-    )
-
     max_tokens = st.slider("Max Tokens", 64, 2048, 320, 32)
-
-    # Retrieval toggle for RAG endpoint
-    rag_enabled = True
-    if endpoint == "Retrieval-Augmented (/rag)":
-        rag_enabled = st.checkbox("Enable retrieval for this call", value=True)
 
     if st.button("🔄 Clear Chat History"):
         st.session_state.messages = []
@@ -70,21 +59,14 @@ def call_backend(user_query: str) -> str:
         token = base64.b64encode(f"{basic_user}:{basic_pass}".encode()).decode()
         headers["Authorization"] = f"Basic {token}"
 
-    # Endpoint selection
-    is_rag = endpoint.startswith("Retrieval")
-    path = "/rag" if is_rag else "/generate"
-
     payload = {
         "user_query": user_query,
         "session_id": st.session_state.session_id,  # may be None
         "max_tokens": max_tokens,
     }
 
-    if is_rag:
-        payload["use_retrieval"] = bool(rag_enabled)
-
     try:
-        resp = requests.post(f"{api_url}{path}", headers=headers, json=payload, timeout=60)
+        resp = requests.post(f"{api_url}/generate", headers=headers, json=payload, timeout=60)
     except Exception as e:
         return f"❌ Connection error: {e}"
 
@@ -113,14 +95,14 @@ if prompt := st.chat_input("Enter your GRC-related question..."):
             st.session_state.messages.append({"role": "assistant", "content": result})
 
 # ==== Notes ====
-
+with st.expander("ℹ️ Notes"):
+    st.markdown(
         """
 - The backend is configured for **deterministic output** (`do_sample=false`), so **temperature/top_p are ignored**.
 - Session memory is keyed by **session_id**; if you don’t send one, the server generates it and we store it for you.
-- `/rag` can optionally use retrieval; disable per call with the checkbox.
 - Authentication:
   - Locally: no auth.
   - Ngrok Basic Auth: enable checkbox, enter user/password.
   - API Key: enable checkbox, enter API key if backend enforces it.
 """
-    
+    )
