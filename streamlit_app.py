@@ -94,14 +94,4 @@ if prompt := st.chat_input("Enter your GRC-related question..."):
             st.markdown(result)
             st.session_state.messages.append({"role": "assistant", "content": result})
 
-# ==== Notes ====
-
-"""
-- The backend is configured for **deterministic output** (`do_sample=false`), so **temperature/top_p are ignored**.
-- Session memory is keyed by **session_id**; if you don’t send one, the server generates it and we store it for you.
-- Authentication:
-  - Locally: no auth.
-  - Ngrok Basic Auth: enable checkbox, enter user/password.
-  - API Key: enable checkbox, enter API key if backend enforces it.
-"""
 
