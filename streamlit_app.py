@@ -15,13 +15,13 @@ with st.sidebar:
 
     api_url = st.text_input("🔗 API Base URL", value=DEFAULT_API_URL)
 
-    st.markdown("**Authentication (Optional)**")
-    use_api_key = st.checkbox("Send X-API-Key header", value=False)
-    api_key = st.text_input("API Key", type="password") if use_api_key else ""
+    #st.markdown("**Authentication (Optional)**")
+    #use_api_key = st.checkbox("Send X-API-Key header", value=False)
+    #api_key = st.text_input("API Key", type="password") if use_api_key else ""
 
-    use_basic = st.checkbox("Use Basic Auth (Ngrok)", value=False)
-    basic_user = st.text_input("Basic user") if use_basic else ""
-    basic_pass = st.text_input("Basic password", type="password") if use_basic else ""
+    #use_basic = st.checkbox("Use Basic Auth (Ngrok)", value=False)
+    #basic_user = st.text_input("Basic user") if use_basic else ""
+    #basic_pass = st.text_input("Basic password", type="password") if use_basic else ""
 
     st.markdown("---")
     max_tokens = st.slider("Max Tokens", 64, 2048, 320, 32)
