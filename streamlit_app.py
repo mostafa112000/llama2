@@ -6,7 +6,7 @@ import base64
 st.set_page_config(page_title="🛡️ PioNeer+")
 
 # ==== Defaults ====
-DEFAULT_API_URL = "https://a908c6ee8ee6.ngrok-free.app"
+DEFAULT_API_URL = "https://a79ec1eb1dc1.ngrok-free.app"
 
 # ==== Sidebar ====
 with st.sidebar:
